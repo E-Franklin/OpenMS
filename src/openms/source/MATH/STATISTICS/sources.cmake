@@ -16,6 +16,7 @@ LinearRegressionWithoutIntercept.cpp
 PosteriorErrorProbabilityModel.cpp
 QuadraticRegression.cpp
 ROCCurve.cpp
+MultivariateLinearRegression.cpp
 )
 
 ### add path to the filenames

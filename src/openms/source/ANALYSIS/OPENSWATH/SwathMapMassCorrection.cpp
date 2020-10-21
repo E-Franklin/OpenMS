@@ -93,7 +93,7 @@ namespace OpenMS
     defaults_.setValue("mz_correction_function", "none", "Type of normalization function for m/z calibration.");
     defaults_.setValidStrings("mz_correction_function", ListUtils::create<String>("none,regression_delta_ppm,unweighted_regression,weighted_regression,quadratic_regression,weighted_quadratic_regression,weighted_quadratic_regression_delta_ppm,quadratic_regression_delta_ppm"));
     defaults_.setValue("im_correction_function", "linear", "Type of normalization function for IM calibration.");
-    defaults_.setValidStrings("im_correction_function", ListUtils::create<String>("none,linear"));
+      defaults_.setValidStrings("im_correction_function", ListUtils::create<String>("none,linear,multivariate"));
 
     defaults_.setValue("debug_im_file", "", "Debug file for Ion Mobility calibration.");
     defaults_.setValue("debug_mz_file", "", "Debug file for m/z calibration.");
@@ -135,7 +135,6 @@ namespace OpenMS
     {
       return;
     }
-    // if it is not none, then it must be linear
 
     std::ofstream os_im;
     if (!debug_im_file_.empty())
@@ -148,6 +147,7 @@ namespace OpenMS
 
     std::vector<String> trgr_ids;
     std::map<std::string, double> pep_im_map;
+    std::map<std::string, double> pep_charge_map;
     for (const auto& trgroup_it : transition_group_map)
     {
       trgr_ids.push_back(trgroup_it.first);
@@ -155,11 +155,15 @@ namespace OpenMS
     for (const auto& cmp : targeted_exp.getCompounds())
     {
       pep_im_map[cmp.id] = cmp.drift_time;
+      pep_charge_map[cmp.id] = cmp.charge;
     }
 
     TransformationDescription::DataPoints data_im;
     std::vector<double> exp_im;
     std::vector<double> theo_im;
+    std::vector<double> mz;
+    std::vector<double> charges;
+    std::vector<double> rt;
 #ifdef _OPENMP
 #pragma omp parallel for 
 #endif
@@ -240,6 +244,9 @@ namespace OpenMS
           data_im.push_back(std::make_pair(im, drift_target));
           exp_im.push_back(im);
           theo_im.push_back(drift_target);
+          mz.push_back(tr.precursor_mz);
+          charges.push_back(charge);
+          rt.push_back(bestRT);
           if (!debug_im_file_.empty())
           {
             os_im << tr.precursor_mz << "\t" << im << "\t" << drift_target << "\t" << bestRT << "\t" << intensity << std::endl;
@@ -286,6 +293,9 @@ namespace OpenMS
           data_im.push_back(std::make_pair(im, drift_target));
           exp_im.push_back(im);
           theo_im.push_back(drift_target);
+          mz.push_back(tr.precursor_mz);
+          charges.push_back(charge);
+          rt.push_back(bestRT);
           if (!debug_im_file_.empty())
           {
             os_im << tr.precursor_mz << "\t" << im << "\t" << drift_target << "\t" << bestRT << "\t" << intensity << std::endl;
@@ -297,24 +307,50 @@ namespace OpenMS
 
     if (!debug_im_file_.empty()) {os_im.close();}
 
-    // linear correction is default (none returns in the beginning of the function)
-    std::vector<double> im_regression_params;
-    double confidence_interval_P(0.0);
-    Math::LinearRegression lr;
-    lr.computeRegression(confidence_interval_P, exp_im.begin(), exp_im.end(), theo_im.begin()); // to convert exp_im -> theoretical im
-    im_regression_params.push_back(lr.getIntercept());
-    im_regression_params.push_back(lr.getSlope());
-    im_regression_params.push_back(0.0);
+    if (im_correction_function_ == "linear")
+    {
+        // linear correction is default (none returns in the beginning of the function)
+        std::vector<double> im_regression_params;
+        double confidence_interval_P(0.0);
+        Math::LinearRegression lr;
+        lr.computeRegression(confidence_interval_P, exp_im.begin(), exp_im.end(), theo_im.begin()); // to convert exp_im -> theoretical im
+        im_regression_params.push_back(lr.getIntercept());
+        im_regression_params.push_back(lr.getSlope());
+        im_regression_params.push_back(0.0);
 
-    std::cout << "# im regression parameters: Y = " << im_regression_params[0] << " + " <<
-      im_regression_params[1] << " X + " << im_regression_params[2] << " X^2" << std::endl;
+        std::cout << "# im regression parameters: Y = " << im_regression_params[0] << " + " <<
+          im_regression_params[1] << " X + " << im_regression_params[2] << " X^2" << std::endl;
 
-    // store IM transformation, using the selected model
-    im_trafo.setDataPoints(data_im);
-    Param model_params;
-    model_params.setValue("symmetric_regression", "false");
-    String model_type = "linear";
-    im_trafo.fitModel(model_type, model_params);
+        // store IM transformation, using the selected model
+        im_trafo.setDataPoints(data_im);
+        Param model_params;
+        model_params.setValue("symmetric_regression", "false");
+        String model_type = "linear";
+        im_trafo.fitModel(model_type, model_params);
+    }
+
+    if (im_correction_function_ == "multivariate")
+    {
+        std::vector<double> im_regression_params;
+        std::vector<double> predicted_im;
+        Math::MultivariateLinearRegression mlr;
+        mlr.computeRegression(exp_im, {theo_im, mz, charges, rt});
+        im_regression_params = mlr.getRegressionParams();
+        predicted_im = mlr.getPredictedValues();
+
+        std::cout << "# im regression parameters: Y = " << im_regression_params[0] << " + " <<
+                im_regression_params[1] << " theo_im + " << im_regression_params[2] << " mz" <<
+                im_regression_params[3] << " charge" << im_regression_params[4] << " rt" << "\n" <<
+                "The relative error is: " << mlr.getRelativeError() << std::endl;
+
+        // transform the data in place
+        int i = 0;
+        for (auto & cmp : targeted_exp.getCompounds())
+        {
+          cmp.drift_time = predicted_im[i];
+          i++;
+        }
+    }
 
     OPENMS_LOG_DEBUG << "SwathMapMassCorrection::correctIM done." << std::endl;
   }

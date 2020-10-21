@@ -18,6 +18,7 @@ QuadraticRegression.h
 PosteriorErrorProbabilityModel.h
 ROCCurve.h
 StatisticFunctions.h
+MultivariateLinearRegression.h
 )
 
 ### add path to the filenames
