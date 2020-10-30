@@ -39,8 +39,8 @@ namespace OpenMS
 {
   namespace Math
   {
-
-    MultivariateLinearRegression::MultivariateLinearRegression(){}
+    MultivariateLinearRegression::MultivariateLinearRegression() :
+            relative_error_(0) {}
 
     std::vector<double> MultivariateLinearRegression::getRegressionParams() const
     {
@@ -52,11 +52,10 @@ namespace OpenMS
       return relative_error_;
     }
 
-    double MultivariateLinearRegression::getPredictedValues() const
+    std::vector<double> MultivariateLinearRegression::getPredictedValues() const
     {
         return predicted_values_;
     }
-
   }
 }
 

@@ -36,11 +36,8 @@
 
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/CONCEPT/Exception.h>
-#include <OpenMS/MATH/STATISTICS/RegressionUtils.h>
-
+#include <vector>
 #include <Eigen/Dense>
-
-using namespace Eigen;
 
 namespace OpenMS
 {
@@ -60,7 +57,7 @@ public:
       /**
           @brief Compute a linear regression using multiple variables
       */
-      void computeRegression(std::vector<double> target, std::list<std::vector<double>> variables);
+      void computeRegression(std::vector<double> target, std::vector<std::vector<double>> variables);
 
       /// Access to the parameters computed in the regression
       std::vector<double> getRegressionParams() const;
@@ -68,7 +65,7 @@ public:
       /// Relative error of the fit
       double getRelativeError() const;
 
-      std::vector<double> getPredictedValues();
+      std::vector<double> getPredictedValues() const;
 
 protected:
         std::vector<double> regression_params_;
@@ -76,35 +73,30 @@ protected:
         std::vector<double> predicted_values_;
     }; //class
 
-    void MultivariateLinearRegression::computeRegression(std::vector<double> target, std::list<std::vector<double>> variables)
-    {
-
-      int num_rows = target.size();
-      // create a vector of ones to put the matrix to calculate the intercept
-      VectorXd ones = VectorXd::Ones(num_rows);
-
-      MatrixXd A(num_rows, variables.size());
-      A << ones;
-      for (auto var : variables)
+      inline void MultivariateLinearRegression::computeRegression(std::vector<double> target, std::vector<std::vector<double>> variables)
       {
-          A << Eigen::Map<VectorXd>(var.data(), num_rows);
+
+          int num_rows = target.size();
+          // create a vector of ones to put the matrix to calculate the intercept
+          Eigen::VectorXd ones = Eigen::VectorXd::Ones(num_rows);
+
+          Eigen::MatrixXd A(num_rows, variables.size());
+          A << ones;
+          for (auto var : variables)
+          {
+              A << Eigen::Map<Eigen::VectorXd>(var.data(), num_rows);
+          }
+
+          Eigen::VectorXd b = Eigen::Map<Eigen::VectorXd>(target.data(), num_rows);
+          // this should return a vector of parameters by computing the singular value decomposition
+          Eigen::VectorXd params = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
+          Eigen::VectorXd predicted = A*params;
+
+          regression_params_ = std::vector<double>(params.data(), params.data()+params.size());
+          predicted_values_ = std::vector<double>(predicted.data(), predicted.data()+predicted.size());
+          relative_error_ = (predicted - b).norm() / b.norm();
+
       }
-      /**Eigen::Map<VectorXd>(theo_im.data(), num_rows),
-      Eigen::Map<VectorXd>(mz.data(), num_rows),
-      Eigen::Map<VectorXd>(charges.data(), num_rows),
-      Eigen::Map<VectorXd>(rt.data(), num_rows);
-    */
-      VectorXd b = Eigen::Map<VectorXd>(target.data(), num_rows);
-      // this should return a vector of parameters by computing the singular value decomposition
-      Eigen::VectorXd regression_params = A.bdcSvd(ComputeThinU | ComputeThinV).solve(b);
-      Eigen::VectorXd predicted_values = A*regression_params;
-
-      regression_params_ = std::vector<double>(regression_params.data(), regression_params.data()+regression_params.size());
-      predicted_values_ = std::vector<double>(predicted_values.data(), predicted_values.data()+predicted_values.size());
-      relative_error_ = (predicted_values - b).norm() / b.norm();
-
-    }
-
   } // namespace Math
 } // namespace OpenMS
 

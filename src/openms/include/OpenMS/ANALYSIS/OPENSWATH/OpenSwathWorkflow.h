@@ -271,7 +271,7 @@ protected:
      * @param load_into_memory Whether to cache the current SWATH map in memory
      *
     */
-    TransformationDescription performRTNormalization(const OpenSwath::LightTargetedExperiment & irt_transitions,
+    TransformationDescription performRTNormalization(OpenSwath::LightTargetedExperiment & irt_transitions,
       std::vector< OpenSwath::SwathMap > & swath_maps,
       TransformationDescription& im_trafo,
       double min_rsq,
@@ -316,7 +316,7 @@ protected:
      * @note This function is based on the algorithm inside the OpenSwathRTNormalizer tool
      *
     */
-    TransformationDescription doDataNormalization_(const OpenSwath::LightTargetedExperiment& transition_exp_,
+    TransformationDescription doDataNormalization_(OpenSwath::LightTargetedExperiment& transition_exp_,
       const std::vector< OpenMS::MSChromatogram >& chromatograms,
       TransformationDescription& im_trafo,
       std::vector< OpenSwath::SwathMap > & swath_maps,

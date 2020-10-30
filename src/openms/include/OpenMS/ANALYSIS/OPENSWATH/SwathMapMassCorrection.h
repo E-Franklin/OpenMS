@@ -100,7 +100,7 @@ public:
     void correctIM(const std::map<String, OpenMS::MRMFeatureFinderScoring::MRMTransitionGroupType *> & transition_group_map,
                    const std::vector< OpenSwath::SwathMap > & swath_maps,
                    TransformationDescription& im_trafo,
-                   const OpenSwath::LightTargetedExperiment& targeted_exp);
+                   OpenSwath::LightTargetedExperiment& targeted_exp);
 
   private:
     double mz_extraction_window_;

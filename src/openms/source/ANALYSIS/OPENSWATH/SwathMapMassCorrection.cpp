@@ -36,6 +36,7 @@
 
 #include <OpenMS/MATH/STATISTICS/LinearRegression.h>
 #include <OpenMS/MATH/STATISTICS/QuadraticRegression.h>
+#include <OpenMS/MATH/STATISTICS/MultivariateLinearRegression.h>
 
 // Classes
 #include <OpenMS/ANALYSIS/OPENSWATH/DATAACCESS/SpectrumAccessQuadMZTransforming.h>
@@ -118,7 +119,7 @@ namespace OpenMS
     const std::map<String, OpenMS::MRMFeatureFinderScoring::MRMTransitionGroupType *> & transition_group_map,
     const std::vector< OpenSwath::SwathMap > & swath_maps,
     TransformationDescription& im_trafo,
-    const OpenSwath::LightTargetedExperiment& targeted_exp)
+    OpenSwath::LightTargetedExperiment& targeted_exp)
   {
     bool ppm = mz_extraction_window_ppm_;
     double mz_extr_window = mz_extraction_window_;
@@ -245,7 +246,7 @@ namespace OpenMS
           exp_im.push_back(im);
           theo_im.push_back(drift_target);
           mz.push_back(tr.precursor_mz);
-          charges.push_back(charge);
+          charges.push_back(pep_charge_map[pepref]);
           rt.push_back(bestRT);
           if (!debug_im_file_.empty())
           {
@@ -294,7 +295,7 @@ namespace OpenMS
           exp_im.push_back(im);
           theo_im.push_back(drift_target);
           mz.push_back(tr.precursor_mz);
-          charges.push_back(charge);
+          charges.push_back(pep_charge_map[pepref]);
           rt.push_back(bestRT);
           if (!debug_im_file_.empty())
           {

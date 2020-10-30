@@ -61,7 +61,7 @@ namespace OpenMS
   }
 
   TransformationDescription OpenSwathCalibrationWorkflow::performRTNormalization(
-    const OpenSwath::LightTargetedExperiment& irt_transitions,
+    OpenSwath::LightTargetedExperiment& irt_transitions,
     std::vector< OpenSwath::SwathMap > & swath_maps,
     TransformationDescription& im_trafo,
     double min_rsq,
@@ -113,7 +113,7 @@ namespace OpenMS
   }
 
   TransformationDescription OpenSwathCalibrationWorkflow::doDataNormalization_(
-    const OpenSwath::LightTargetedExperiment& targeted_exp,
+    OpenSwath::LightTargetedExperiment& targeted_exp,
     const std::vector< OpenMS::MSChromatogram >& chromatograms,
     TransformationDescription& im_trafo,
     std::vector< OpenSwath::SwathMap > & swath_maps,
