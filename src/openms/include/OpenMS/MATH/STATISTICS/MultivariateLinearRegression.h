@@ -38,6 +38,7 @@
 #include <OpenMS/CONCEPT/Exception.h>
 #include <vector>
 #include <Eigen/Dense>
+#include <iostream>
 
 namespace OpenMS
 {
@@ -76,25 +77,25 @@ protected:
       inline void MultivariateLinearRegression::computeRegression(std::vector<double> target, std::vector<std::vector<double>> variables)
       {
 
-          int num_rows = target.size();
-          // create a vector of ones to put the matrix to calculate the intercept
-          Eigen::VectorXd ones = Eigen::VectorXd::Ones(num_rows);
+        int num_rows = target.size();
+        // create a vector of ones to put the matrix to calculate the intercept
+        Eigen::VectorXd ones = Eigen::VectorXd::Ones(num_rows);
+        Eigen::MatrixXd A(num_rows, variables.size()+1);
+        A << ones;
 
-          Eigen::MatrixXd A(num_rows, variables.size());
-          A << ones;
-          for (auto var : variables)
-          {
-              A << Eigen::Map<Eigen::VectorXd>(var.data(), num_rows);
-          }
+        for (auto var : variables)
+        {
+            A << Eigen::Map<Eigen::VectorXd>(var.data(), num_rows);
+        }
 
-          Eigen::VectorXd b = Eigen::Map<Eigen::VectorXd>(target.data(), num_rows);
-          // this should return a vector of parameters by computing the singular value decomposition
-          Eigen::VectorXd params = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
-          Eigen::VectorXd predicted = A*params;
+        Eigen::VectorXd b = Eigen::Map<Eigen::VectorXd>(target.data(), num_rows);
+        // returns a vector of parameters by computing the singular value decomposition
+        Eigen::VectorXd params = A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
+        Eigen::VectorXd predicted = A*params;
 
-          regression_params_ = std::vector<double>(params.data(), params.data()+params.size());
-          predicted_values_ = std::vector<double>(predicted.data(), predicted.data()+predicted.size());
-          relative_error_ = (predicted - b).norm() / b.norm();
+        regression_params_ = std::vector<double>(params.data(), params.data()+params.size());
+        predicted_values_ = std::vector<double>(predicted.data(), predicted.data()+predicted.size());
+        relative_error_ = (predicted - b).norm() / b.norm();
 
       }
   } // namespace Math
