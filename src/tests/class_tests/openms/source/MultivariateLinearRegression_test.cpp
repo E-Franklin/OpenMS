@@ -66,33 +66,71 @@ END_SECTION
 // Create a test data input for the equation Ax = b
 // The columns for A are passed as vectors, x is the expected params and b is the target
 // Test with a single variable
-vector<double> var(10);
+vector<double> x1(10);
+vector<double> x2 {1,2,7,4,5,6,7,8,9,10};
 vector<double> target(10);
 vector<double> target1(10);
+vector<double> target2(10);
+vector<double> multivar_target(10);
+vector<double> multivar_target1(10);
 vector<double> expected_params({4, 5.5});
 vector<double> expected_params1({0, 5.5});
+vector<double> expected_params2({4.818, 5.418});
+vector<double> multivar_params({4, 5.5, 7});
+vector<double> multivar_params2({1.725, 5.325, 7.375});
+vector<double> expected_predicted(10);
+vector<double> multivar_expected_predicted(10);
 
 for (int i=0; i < 10; ++i)
 {
-  var[i] = i;
-  target[i] = 5.5*i + 4;
-  target1[i] = 5.5*i; // no intercept
+  x1[i] = i;
+
+  target[i] = expected_params[0] + expected_params[1]*x1[i];
+  target1[i] = expected_params1[1]*x1[i]; // no intercept
+  target2[i] = expected_params[0] + expected_params[1]*x1[i];
+
+  expected_predicted[i] = expected_params2[1]*i + expected_params2[0];
+
+  multivar_target[i] = 4 + 5.5*x1[i] + 7*x2[i];
+  multivar_target1[i] = 4 + 5.5*x1[i] + 7*x2[i];
+
+  multivar_expected_predicted[i] = multivar_params2[0] + multivar_params2[1]*x1[i] + multivar_params2[2]*x2[i];
 }
+
+target2[3] = 25;
+multivar_target1[3] = 40;
 
 MultivariateLinearRegression m_reg;
 
 START_SECTION((void computeRegression(std::vector<double> target, std::vector<std::vector<double>> variables)))
 {
   // test with a single variable, with and without intercept, with no error
-  m_reg.computeRegression(target, {var});
+  m_reg.computeRegression(target, {x1});
   TEST_EQUAL(m_reg.getRegressionParams()==expected_params, true)
   TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.0)
   TEST_EQUAL(m_reg.getPredictedValues()==target, true)
 
-  m_reg.computeRegression(target1, {var});
+  m_reg.computeRegression(target1, {x1});
   TEST_EQUAL(m_reg.getRegressionParams()==expected_params1, true)
   TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.0)
   TEST_EQUAL(m_reg.getPredictedValues()==target1, true)
+
+  // test with a single variable, with intercept, and with error
+  m_reg.computeRegression(target2, {x1});
+  TEST_EQUAL(m_reg.getRegressionParams()==expected_params2, true)
+  TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.015475)
+  TEST_EQUAL(m_reg.getPredictedValues()==expected_predicted, true)
+
+  // test with three variables, with intercept, with and without error
+  m_reg.computeRegression(multivar_target, {x1, x2});
+  TEST_EQUAL(m_reg.getRegressionParams()==multivar_params, true)
+  TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.0) 
+  TEST_EQUAL(m_reg.getPredictedValues()==multivar_target, true)
+
+  m_reg.computeRegression(multivar_target1, {x1, x2});
+  TEST_EQUAL(m_reg.getRegressionParams()==multivar_params2, true)
+  TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.031894)
+  TEST_EQUAL(m_reg.getPredictedValues()==multivar_expected_predicted, true)
 }
 END_SECTION
 

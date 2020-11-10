@@ -288,6 +288,7 @@ set(math_executables_list
   LinearRegression_test
   MathFunctions_test
   #MSNumpress_test
+  MultivariateLinearRegression_test
   NNLS_test
   NonNegativeLeastSquaresSolver_test
   PosteriorErrorProbabilityModel_test
