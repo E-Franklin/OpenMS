@@ -75,9 +75,9 @@ vector<double> multivar_target(10);
 vector<double> multivar_target1(10);
 vector<double> expected_params({4, 5.5});
 vector<double> expected_params1({0, 5.5});
-vector<double> expected_params2({4.818, 5.418});
+vector<double> expected_params2({4.81818, 5.41818});
 vector<double> multivar_params({4, 5.5, 7});
-vector<double> multivar_params2({1.725, 5.325, 7.375});
+vector<double> multivar_params1({1.725, 5.325, 7.375});
 vector<double> expected_predicted(10);
 vector<double> multivar_expected_predicted(10);
 
@@ -94,7 +94,7 @@ for (int i=0; i < 10; ++i)
   multivar_target[i] = 4 + 5.5*x1[i] + 7*x2[i];
   multivar_target1[i] = 4 + 5.5*x1[i] + 7*x2[i];
 
-  multivar_expected_predicted[i] = multivar_params2[0] + multivar_params2[1]*x1[i] + multivar_params2[2]*x2[i];
+  multivar_expected_predicted[i] = multivar_params1[0] + multivar_params1[1] * x1[i] + multivar_params1[2] * x2[i];
 }
 
 target2[3] = 25;
@@ -106,31 +106,63 @@ START_SECTION((void computeRegression(std::vector<double> target, std::vector<st
 {
   // test with a single variable, with and without intercept, with no error
   m_reg.computeRegression(target, {x1});
-  TEST_EQUAL(m_reg.getRegressionParams()==expected_params, true)
+  vector<double> calculated_params = m_reg.getRegressionParams();
+  vector<double> predicted = m_reg.getPredictedValues();
+  TEST_REAL_SIMILAR(calculated_params[0], expected_params[0])
+  TEST_REAL_SIMILAR(calculated_params[1], expected_params[1])
   TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.0)
-  TEST_EQUAL(m_reg.getPredictedValues()==target, true)
+  for (int i=0; i < 10; ++i)
+  {
+    TEST_REAL_SIMILAR(predicted[i], target[i])
+  }
 
   m_reg.computeRegression(target1, {x1});
-  TEST_EQUAL(m_reg.getRegressionParams()==expected_params1, true)
+  calculated_params = m_reg.getRegressionParams();
+  predicted = m_reg.getPredictedValues();
+  TEST_REAL_SIMILAR(calculated_params[0], expected_params1[0])
+  TEST_REAL_SIMILAR(calculated_params[1], expected_params1[1])
   TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.0)
-  TEST_EQUAL(m_reg.getPredictedValues()==target1, true)
+  for (int i=0; i < 10; ++i)
+  {
+    TEST_REAL_SIMILAR(predicted[i], target1[i])
+  }
 
   // test with a single variable, with intercept, and with error
   m_reg.computeRegression(target2, {x1});
-  TEST_EQUAL(m_reg.getRegressionParams()==expected_params2, true)
-  TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.015475)
-  TEST_EQUAL(m_reg.getPredictedValues()==expected_predicted, true)
+  calculated_params = m_reg.getRegressionParams();
+  predicted = m_reg.getPredictedValues();
+  TEST_REAL_SIMILAR(calculated_params[0], expected_params2[0])
+  TEST_REAL_SIMILAR(calculated_params[1], expected_params2[1])
+  TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.040144)
+  for (int i=0; i < 10; ++i)
+  {
+    TEST_REAL_SIMILAR(predicted[i], expected_predicted[i])
+  }
 
   // test with three variables, with intercept, with and without error
   m_reg.computeRegression(multivar_target, {x1, x2});
-  TEST_EQUAL(m_reg.getRegressionParams()==multivar_params, true)
-  TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.0) 
-  TEST_EQUAL(m_reg.getPredictedValues()==multivar_target, true)
+  calculated_params = m_reg.getRegressionParams();
+  predicted = m_reg.getPredictedValues();
+  TEST_REAL_SIMILAR(calculated_params[0], multivar_params[0])
+  TEST_REAL_SIMILAR(calculated_params[1], multivar_params[1])
+  TEST_REAL_SIMILAR(calculated_params[2], multivar_params[2])
+  TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.0)
+  for (int i=0; i < 10; ++i)
+  {
+    TEST_REAL_SIMILAR(predicted[i], multivar_target[i])
+  }
 
   m_reg.computeRegression(multivar_target1, {x1, x2});
-  TEST_EQUAL(m_reg.getRegressionParams()==multivar_params2, true)
+  calculated_params = m_reg.getRegressionParams();
+  predicted = m_reg.getPredictedValues();
+  TEST_REAL_SIMILAR(calculated_params[0], multivar_params1[0])
+  TEST_REAL_SIMILAR(calculated_params[1], multivar_params1[1])
+  TEST_REAL_SIMILAR(calculated_params[2], multivar_params1[2])
   TEST_REAL_SIMILAR(m_reg.getRelativeError(), 0.031894)
-  TEST_EQUAL(m_reg.getPredictedValues()==multivar_expected_predicted, true)
+  for (int i=0; i < 10; ++i)
+  {
+    TEST_REAL_SIMILAR(predicted[i], multivar_expected_predicted[i])
+  }
 }
 END_SECTION
 

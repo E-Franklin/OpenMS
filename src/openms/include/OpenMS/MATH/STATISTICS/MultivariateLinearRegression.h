@@ -81,11 +81,11 @@ protected:
         // create a vector of ones to put the matrix to calculate the intercept
         Eigen::VectorXd ones = Eigen::VectorXd::Ones(num_rows);
         Eigen::MatrixXd A(num_rows, variables.size()+1);
-        A << ones;
+        A.col(0) << ones;
 
-        for (auto var : variables)
+        for (int i = 0; i < variables.size(); ++i)
         {
-            A << Eigen::Map<Eigen::VectorXd>(var.data(), num_rows);
+            A.col(i+1) << Eigen::Map<Eigen::VectorXd>(variables[i].data(), num_rows);
         }
 
         Eigen::VectorXd b = Eigen::Map<Eigen::VectorXd>(target.data(), num_rows);
